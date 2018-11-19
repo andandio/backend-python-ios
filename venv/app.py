@@ -10,29 +10,32 @@ def hello(name):
 
 def update_location():
     json = request.get_json()	
-    error = update_location_validation_error(json)
-    if error:
-    	return jsonify({"status":error}), 400
+    try: 
+    	db_update_location(json)
+    except KeyError:
+    	return jsonify({"status":"error", "error":"missing args"}), 400
+    except ValidationError as e:
+    	return jsonify({"staus":"error", "error":e.description}), 400
 
     message = "location {} updated to coordinates {} {} ".format(json["address"], json["lat"], json["lon"])
     
     return jsonify({"status":"success", "message": message})
 
-def update_location_validation_error(json):
+def db_update_location(json):
 	if "lat" not in json:
-		return "lat not provided"
-	if "lon" not in json:
-		return "lon not provided"
-	if not (type(json["lat"]) is float or type(json["lat"]) is int):
-		return "lat must be float or int value"
-	if not (type(json["lon"]) is float or type(json["lon"]) is int):
-		return "lon must be a float or an int value"
-	if not 90 > json["lat"] > -90:
-		return "lat must be a number between -90 and 90"
-	if not 180 > json["lon"] > -180:
-		return "lon must be a number between -180 and 180"
-	return None
-
+		raise ValidationError("lat not provided")
+	elif "lon" not in json:
+		raise ValidationError("lon not provided")
+	elif not (type(json["lat"]) is float or type(json["lat"]) is int):
+		raise ValidationError("lat must be float or int value")
+	elif not (type(json["lon"]) is float or type(json["lon"]) is int):
+		raise ValidationError("lon must be a float or an int value")
+	elif not 90 > json["lat"] > -90:
+		raise ValidationError("lat must be a number between -90 and 90")
+	elif not 180 > json["lon"] > -180:
+		raise ValidationError("lon must be a number between -180 and 180")
+	else:
+		pass
 
 
 if __name__ == '__main__':
